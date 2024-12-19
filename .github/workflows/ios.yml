@@ -1,0 +1,45 @@
+name: iOS Build Workflow (Unsigned IPA)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      # Step 1: 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: 安装 CocoaPods 依赖
+      - name: Install CocoaPods dependencies
+        run: |
+          gem install cocoapods
+          pod install --project-directory=ios/
+
+      # Step 3: 构建未签名的 IPA
+      - name: Build Unsigned IPA
+        run: |
+          xcodebuild -workspace ios/LxMusicMobile.xcworkspace \
+                     -scheme LxMusicMobile \
+                     -sdk iphoneos \
+                     -configuration Release \
+                     archive -archivePath $PWD/build/LxMusicMobile.xcarchive
+
+          xcodebuild -exportArchive \
+                     -archivePath $PWD/build/LxMusicMobile.xcarchive \
+                     -exportOptionsPlist ios/ExportOptions.plist \
+                     -exportPath $PWD/build
+
+      # Step 4: 上传未签名的 IPA 文件
+      - name: Upload Unsigned IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: LxMusicMobile-unsigned.ipa
+          path: build/LxMusicMobile.ipa
