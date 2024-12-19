@@ -1,4 +1,4 @@
-name: iOS Build Workflow (Unsigned IPA)
+name: iOS Build Workflow
 
 on:
   push:
@@ -17,13 +17,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: 安装 CocoaPods 依赖
+      # Step 2: 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Step 3: 安装 Node.js 依赖
+      - name: Install Node.js dependencies
+        run: |
+          npm install
+
+      # Step 4: 安装 CocoaPods 依赖
       - name: Install CocoaPods dependencies
         run: |
           gem install cocoapods
-          pod install --project-directory=ios/
+          cd ios
+          pod install
 
-      # Step 3: 构建未签名的 IPA
+      # Step 5: 构建未签名的 IPA
       - name: Build Unsigned IPA
         run: |
           xcodebuild -workspace ios/LxMusicMobile.xcworkspace \
@@ -34,10 +46,10 @@ jobs:
 
           xcodebuild -exportArchive \
                      -archivePath $PWD/build/LxMusicMobile.xcarchive \
-                     -exportOptionsPlist ios/ExportOptions.plist \
-                     -exportPath $PWD/build
+                     -exportPath $PWD/build \
+                     -exportOptionsPlist ios/ExportOptions.plist
 
-      # Step 4: 上传未签名的 IPA 文件
+      # Step 6: 上传未签名的 IPA 文件
       - name: Upload Unsigned IPA
         uses: actions/upload-artifact@v3
         with:
